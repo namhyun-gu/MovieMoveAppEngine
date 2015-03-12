@@ -1,0 +1,4 @@
+cron:
+- description: daily movie list update
+  url: /moviemove
+  schedule: every day 1:00
