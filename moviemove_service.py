@@ -5,9 +5,11 @@ import json
 import logging
 import yaml
 import webapp2
+from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 
 from urlbuilder import urlbuilder
+from config import ApiConfig
 
 class KobisApi():
     TYPE_COMMON_CODE = 100
@@ -26,7 +28,7 @@ class KobisApi():
     QUERY_SEARCH_MOVIE_LIST = "searchMovieList"
     QUERY_TYPE = ".json"
 
-    API_KEY = "7ffbb106d667ab3ddf34dc7ba8ff2c65"
+    API_KEY = ApiConfig.KOBIS_API_KEY
     PARAM_KEY = "key"
     PARAM_TARGET_DT = "targetDt"
     PARAM_MOVIE_CD = "movieCd"
@@ -75,7 +77,7 @@ class TheMovieDbApi():
     QUERY_MOVIE = "movie"
     QUERY_IMAGES = "images"
 
-    API_KEY = "848790748cc5407875ba6ae106a18f24"  # It is test key!
+    API_KEY = ApiConfig.THE_MOVIE_DB_API_KEY
     PARAM_KEY = "api_key"
     PARAM_QUERY = "query"
     PARAM_LANGUAGE = "language"
@@ -176,7 +178,11 @@ class MovieMoveHandler(webapp2.RedirectHandler):
     KEY_ID = "id"
     KEY_POSTER_PATH = "poster_path"
 
+    # Urlfetch Config
+    DEADLINE_INTERVAL = 50
+
     def get(self):
+        # urlfetch.set_default_fetch_deadline(50)
         json_result_content = None
         if self.is_data_exist() == False:
             logging.info("DATA NOT EXIST!")
@@ -197,8 +203,8 @@ class MovieMoveHandler(webapp2.RedirectHandler):
 
     def fetch_data(self):
         kobis_url = KobisApi().get_url(KobisApi.TYPE_DAILY_BOX_OFFICE)
-        kobis_responce = urllib2.urlopen(kobis_url)
-        kobis_content = unicode(kobis_responce.read(), "utf-8")
+        kobis_responce = urlfetch.fetch(kobis_url, deadline=self.DEADLINE_INTERVAL)
+        kobis_content = unicode(kobis_responce.content, "utf-8")
         kobis_json_object = yaml.load(kobis_content)
 
         kobis_daily_boxoffice_array = kobis_json_object[self.KEY_BOX_OFFICE_RESULT][self.KEY_DAILY_BOX_OFFICE_LIST]
@@ -218,8 +224,8 @@ class MovieMoveHandler(webapp2.RedirectHandler):
             kobis_api.set_param_moviecd(result_object[self.KEY_MOVIE_CD])
             kobis_url = kobis_api.get_url(KobisApi.TYPE_MOVIE_DETAIL_INFO)
 
-            kobis_responce = urllib2.urlopen(kobis_url)
-            kobis_content = unicode(kobis_responce.read(), "utf-8")
+            kobis_responce = urlfetch.fetch(kobis_url, deadline=self.DEADLINE_INTERVAL)
+            kobis_content = unicode(kobis_responce.content, "utf-8")
             kobis_json_object = yaml.load(kobis_content)
             kobis_detail_object = kobis_json_object[self.KEY_MOVIE_INFO_RESULT][self.KEY_MOVIE_INFO]
 
@@ -237,8 +243,8 @@ class MovieMoveHandler(webapp2.RedirectHandler):
                 the_movie_db = TheMovieDbApi()
                 the_movie_db.set_param_query(result_object[self.KEY_MOVIE_NM].replace(" ", "%20"))
                 the_movie_db_url = the_movie_db.get_url(TheMovieDbApi.TYPE_SEARCH_MOVIE)
-                the_movie_db_responce = urllib2.urlopen(the_movie_db_url)
-                the_movie_db_content = unicode(the_movie_db_responce.read(), "utf-8")
+                the_movie_db_responce = urlfetch.fetch(the_movie_db_url, deadline=self.DEADLINE_INTERVAL)
+                the_movie_db_content = unicode(the_movie_db_responce.content, "utf-8")
                 the_movie_db_json_object = yaml.load(the_movie_db_content)
 
                 if the_movie_db_json_object[self.KEY_RESULTS][0][self.KEY_ID] is "":
