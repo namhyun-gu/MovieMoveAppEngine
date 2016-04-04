@@ -16,6 +16,7 @@
 #
 import webapp2
 from moviemove_service import MovieMoveHandler
+from yma_service import YmaServiceHandler
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
@@ -35,4 +36,5 @@ class MainHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/moviemove', MovieMoveHandler),
+    ('/ymaservice', YmaServiceHandler)
 ], debug=True)
